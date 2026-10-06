@@ -1,0 +1,3053 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DGA Life Simulator</title>
+
+<style>
+:root{
+    --blue:#173b72;
+    --blue2:#245ca8;
+    --light-blue:#eaf2ff;
+    --red:#d92d3f;
+    --green:#18a66a;
+    --orange:#f59e0b;
+    --purple:#7c3aed;
+    --dark:#101828;
+    --gray:#667085;
+    --light:#f5f7fb;
+    --white:#ffffff;
+    --shadow:0 15px 45px rgba(16,24,40,.14);
+}
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:
+        radial-gradient(circle at top left,#dceaff 0,#f5f7fb 35%,#eef2f8 100%);
+    color:var(--dark);
+    min-height:100vh;
+}
+
+/* =========================
+   GLOBAL
+========================= */
+
+button{
+    font-family:inherit;
+}
+
+.hidden{
+    display:none!important;
+}
+
+#app{
+    min-height:100vh;
+}
+
+/* =========================
+   HOME
+========================= */
+
+.home{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:30px;
+}
+
+.home-card{
+    width:min(900px,100%);
+    background:white;
+    border-radius:30px;
+    box-shadow:var(--shadow);
+    padding:55px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    animation:appear .7s ease;
+}
+
+.home-card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:9px;
+    background:linear-gradient(90deg,var(--blue),var(--red),var(--orange));
+}
+
+.logo-circle{
+    width:105px;
+    height:105px;
+    margin:0 auto 20px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--blue),var(--blue2));
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:34px;
+    font-weight:900;
+    box-shadow:0 15px 30px rgba(23,59,114,.3);
+}
+
+.game-title{
+    font-size:clamp(42px,8vw,78px);
+    line-height:.9;
+    font-weight:1000;
+    letter-spacing:-4px;
+    color:var(--blue);
+    margin-bottom:18px;
+}
+
+.game-subtitle{
+    color:var(--gray);
+    font-size:20px;
+    margin-bottom:35px;
+}
+
+.rules{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+    margin:30px 0;
+}
+
+.rule{
+    background:var(--light);
+    border-radius:18px;
+    padding:20px;
+}
+
+.rule .emoji{
+    font-size:30px;
+    margin-bottom:10px;
+}
+
+.rule strong{
+    display:block;
+    margin-bottom:5px;
+}
+
+.rule span{
+    color:var(--gray);
+    font-size:14px;
+}
+
+.start-button{
+    border:0;
+    border-radius:16px;
+    padding:18px 40px;
+    background:linear-gradient(135deg,var(--blue),var(--blue2));
+    color:white;
+    font-size:18px;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 12px 25px rgba(23,59,114,.25);
+    transition:.2s;
+}
+
+.start-button:hover{
+    transform:translateY(-3px) scale(1.02);
+}
+
+/* =========================
+   GAME
+========================= */
+
+.game{
+    min-height:100vh;
+    padding-bottom:50px;
+}
+
+.topbar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(255,255,255,.94);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid #e4e7ec;
+    padding:13px 20px;
+}
+
+.topbar-inner{
+    width:min(1150px,100%);
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+}
+
+.brand{
+    font-weight:1000;
+    color:var(--blue);
+    font-size:20px;
+}
+
+.stats{
+    display:flex;
+    gap:12px;
+    align-items:center;
+}
+
+.stat{
+    min-width:145px;
+    padding:10px 14px;
+    border-radius:13px;
+    background:var(--light);
+}
+
+.stat-label{
+    font-size:11px;
+    color:var(--gray);
+    text-transform:uppercase;
+    font-weight:800;
+}
+
+.stat-value{
+    font-size:20px;
+    font-weight:900;
+    margin-top:2px;
+}
+
+.energy-bar{
+    height:7px;
+    border-radius:10px;
+    background:#dfe4ec;
+    margin-top:7px;
+    overflow:hidden;
+}
+
+.energy-fill{
+    height:100%;
+    width:100%;
+    border-radius:10px;
+    background:linear-gradient(90deg,var(--green),#7ed957);
+    transition:.5s ease;
+}
+
+.energy-fill.medium{
+    background:linear-gradient(90deg,var(--orange),#facc15);
+}
+
+.energy-fill.low{
+    background:linear-gradient(90deg,var(--red),#fb7185);
+}
+
+/* =========================
+   GAME CONTAINER
+========================= */
+
+.game-container{
+    width:min(1050px,calc(100% - 30px));
+    margin:40px auto;
+}
+
+.progress-wrapper{
+    margin-bottom:25px;
+}
+
+.progress-top{
+    display:flex;
+    justify-content:space-between;
+    color:var(--gray);
+    font-size:13px;
+    margin-bottom:8px;
+}
+
+.progress{
+    height:9px;
+    border-radius:10px;
+    background:#dfe4ec;
+    overflow:hidden;
+}
+
+.progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--blue),var(--purple));
+    transition:.5s;
+}
+
+/* =========================
+   EVENT CARD
+========================= */
+
+.event-card{
+    background:white;
+    border-radius:28px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    animation:slideUp .45s ease;
+}
+
+.event-header{
+    padding:30px 35px;
+    background:linear-gradient(135deg,var(--blue),var(--blue2));
+    color:white;
+}
+
+.event-time{
+    font-size:14px;
+    opacity:.8;
+    font-weight:800;
+    margin-bottom:8px;
+}
+
+.event-title{
+    font-size:clamp(27px,5vw,42px);
+    font-weight:1000;
+}
+
+.event-description{
+    margin-top:10px;
+    font-size:17px;
+    line-height:1.5;
+    opacity:.94;
+}
+
+.event-body{
+    padding:35px;
+}
+
+.message{
+    background:#f8fafc;
+    border:1px solid #e4e7ec;
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:25px;
+    line-height:1.6;
+    position:relative;
+}
+
+.message::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:5px;
+    border-radius:18px 0 0 18px;
+    background:var(--blue);
+}
+
+.message strong{
+    display:block;
+    margin-bottom:8px;
+}
+
+/* =========================
+   CHOICES
+========================= */
+
+.choices{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+}
+
+.choice{
+    border:2px solid #e4e7ec;
+    background:white;
+    border-radius:17px;
+    padding:20px;
+    text-align:left;
+    cursor:pointer;
+    transition:.2s;
+    min-height:105px;
+}
+
+.choice:hover{
+    border-color:var(--blue2);
+    background:var(--light-blue);
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(23,59,114,.1);
+}
+
+.choice-letter{
+    width:34px;
+    height:34px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:var(--blue);
+    color:white;
+    font-weight:900;
+    margin-right:8px;
+}
+
+.choice-text{
+    font-weight:700;
+    line-height:1.4;
+}
+
+/* =========================
+   RESULT
+========================= */
+
+.result{
+    margin-top:25px;
+    padding:20px;
+    border-radius:17px;
+    background:#f8fafc;
+    animation:appear .3s ease;
+}
+
+.result-title{
+    font-size:20px;
+    font-weight:900;
+    margin-bottom:8px;
+}
+
+.result-text{
+    line-height:1.5;
+    color:#475467;
+}
+
+.result.good{
+    background:#ecfdf3;
+    border:1px solid #abefc6;
+}
+
+.result.bad{
+    background:#fef3f2;
+    border:1px solid #fecdca;
+}
+
+.result.warning{
+    background:#fffaeb;
+    border:1px solid #fedf89;
+}
+
+/* =========================
+   CONTINUE
+========================= */
+
+.continue{
+    display:block;
+    width:100%;
+    border:0;
+    margin-top:20px;
+    padding:16px;
+    border-radius:14px;
+    background:var(--dark);
+    color:white;
+    font-weight:900;
+    font-size:16px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.continue:hover{
+    transform:translateY(-2px);
+}
+
+/* =========================
+   MAIL
+========================= */
+
+.mail-box{
+    border:1px solid #d0d5dd;
+    border-radius:15px;
+    overflow:hidden;
+    background:white;
+    margin-bottom:25px;
+}
+
+.mail-top{
+    background:#f2f4f7;
+    padding:13px 17px;
+    font-size:13px;
+}
+
+.mail-content{
+    padding:22px;
+    line-height:1.6;
+}
+
+.mail-urgent{
+    color:var(--red);
+    font-weight:900;
+}
+
+/* =========================
+   QCM
+========================= */
+
+.qcm{
+    background:#f8fafc;
+    border-radius:20px;
+    padding:25px;
+}
+
+.qcm-number{
+    color:var(--purple);
+    font-weight:900;
+    margin-bottom:10px;
+}
+
+.qcm-question{
+    font-size:22px;
+    font-weight:900;
+    line-height:1.35;
+    margin-bottom:20px;
+}
+
+.qcm-options{
+    display:grid;
+    gap:10px;
+}
+
+.qcm-option{
+    border:2px solid #e4e7ec;
+    border-radius:13px;
+    padding:15px;
+    background:white;
+    cursor:pointer;
+    text-align:left;
+    font-weight:700;
+    transition:.2s;
+}
+
+.qcm-option:hover{
+    border-color:var(--purple);
+    background:#f5f3ff;
+}
+
+/* =========================
+   END SCREEN
+========================= */
+
+.end-screen{
+    width:min(800px,calc(100% - 30px));
+    margin:70px auto;
+    background:white;
+    box-shadow:var(--shadow);
+    border-radius:30px;
+    padding:50px;
+    text-align:center;
+    animation:zoomIn .5s ease;
+}
+
+.end-icon{
+    font-size:80px;
+    margin-bottom:15px;
+}
+
+.end-title{
+    font-size:clamp(35px,7vw,65px);
+    font-weight:1000;
+    margin-bottom:15px;
+}
+
+.end-text{
+    font-size:18px;
+    line-height:1.7;
+    color:#475467;
+    margin-bottom:30px;
+}
+
+.end-stats{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+    margin-bottom:30px;
+}
+
+.end-stat{
+    background:var(--light);
+    padding:20px;
+    border-radius:17px;
+}
+
+.end-stat strong{
+    display:block;
+    font-size:30px;
+    color:var(--blue);
+}
+
+/* =========================
+   TOAST
+========================= */
+
+.toast{
+    position:fixed;
+    bottom:25px;
+    left:50%;
+    transform:translateX(-50%) translateY(100px);
+    background:#101828;
+    color:white;
+    padding:14px 22px;
+    border-radius:14px;
+    z-index:100;
+    opacity:0;
+    transition:.3s;
+    max-width:90%;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+
+.toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+@keyframes appear{
+    from{
+        opacity:0;
+        transform:translateY(15px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+@keyframes slideUp{
+    from{
+        opacity:0;
+        transform:translateY(30px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+@keyframes zoomIn{
+    from{
+        opacity:0;
+        transform:scale(.9);
+    }
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+@keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)}
+    60%{transform:translateX(-6px)}
+    80%{transform:translateX(6px)}
+}
+
+.shake{
+    animation:shake .4s ease;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:750px){
+
+    .home-card{
+        padding:35px 22px;
+    }
+
+    .rules{
+        grid-template-columns:1fr;
+    }
+
+    .topbar-inner{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .stats{
+        width:100%;
+    }
+
+    .stat{
+        flex:1;
+        min-width:0;
+    }
+
+    .event-body{
+        padding:22px;
+    }
+
+    .choices{
+        grid-template-columns:1fr;
+    }
+
+    .end-screen{
+        padding:35px 22px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="app"></div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+
+/* =========================================================
+   DGA LIFE SIMULATOR
+   ========================================================= */
+
+const app = document.getElementById("app");
+const toast = document.getElementById("toast");
+
+let game = {
+    time: 8 * 60,
+    energy: 100,
+
+    step: 1,
+
+    mails: 192,
+
+    sodaNoAnswer: false,
+    alexisIgnored: false,
+    aiSurprise: false,
+
+    hungerProblem: false,
+    voicemailImportant: false,
+
+    finalTriggered: false,
+    finished: false,
+
+    qcmQuestion: 1,
+
+    lastChoice: null
+};
+
+
+/* =========================================================
+   UTILITAIRES
+   ========================================================= */
+
+function formatTime(minutes){
+
+    let h = Math.floor(minutes / 60);
+    let m = minutes % 60;
+
+    return String(h).padStart(2,"0") + ":" +
+           String(m).padStart(2,"0");
+}
+
+
+function changeStats(timeChange = 0, energyChange = 0){
+
+    game.time += timeChange;
+
+    game.energy += energyChange;
+
+    if(game.energy > 100){
+        game.energy = 100;
+    }
+
+    if(game.energy < 0){
+        game.energy = 0;
+    }
+
+    updateInterface();
+
+    saveGame();
+}
+
+
+function updateInterface(){
+
+    const time = document.getElementById("game-time");
+    const energy = document.getElementById("energy-value");
+    const fill = document.getElementById("energy-fill");
+
+    if(time){
+        time.textContent = formatTime(game.time);
+    }
+
+    if(energy){
+        energy.textContent = game.energy;
+    }
+
+    if(fill){
+
+        fill.style.width = game.energy + "%";
+
+        fill.classList.remove("medium","low");
+
+        if(game.energy <= 50 && game.energy > 20){
+            fill.classList.add("medium");
+        }
+
+        if(game.energy <= 20){
+            fill.classList.add("low");
+        }
+    }
+
+    const progress = document.getElementById("progress-fill");
+
+    if(progress){
+
+        let percentage =
+            ((game.step - 1) / 9) * 100;
+
+        progress.style.width =
+            Math.min(100,percentage) + "%";
+    }
+}
+
+
+function saveGame(){
+
+    localStorage.setItem(
+        "dgaLifeSimulatorSave",
+        JSON.stringify(game)
+    );
+}
+
+
+function loadGame(){
+
+    const saved =
+        localStorage.getItem("dgaLifeSimulatorSave");
+
+    if(saved){
+
+        try{
+            game = JSON.parse(saved);
+            return true;
+        }
+        catch(e){
+            console.log("Sauvegarde invalide");
+        }
+    }
+
+    return false;
+}
+
+
+function clearSave(){
+
+    localStorage.removeItem(
+        "dgaLifeSimulatorSave"
+    );
+}
+
+
+/* =========================================================
+   HOME
+   ========================================================= */
+
+function showHome(){
+
+    app.innerHTML = `
+
+    <div class="home">
+
+        <div class="home-card">
+
+            <div class="logo-circle">
+                DGA
+            </div>
+
+            <div class="game-title">
+                DGA LIFE<br>
+                SIMULATOR
+            </div>
+
+            <div class="game-subtitle">
+                Une journée absolument normale dans la vie d'un DGA.
+                Enfin... normalement.
+            </div>
+
+            <div class="rules">
+
+                <div class="rule">
+                    <div class="emoji">⏰</div>
+                    <strong>08:00 → 19:30</strong>
+                    <span>
+                        Une journée qui paraît interminable.
+                    </span>
+                </div>
+
+                <div class="rule">
+                    <div class="emoji">⚡</div>
+                    <strong>100 énergie</strong>
+                    <span>
+                        Gère ton énergie pour survivre.
+                    </span>
+                </div>
+
+                <div class="rule">
+                    <div class="emoji">🎯</div>
+                    <strong>20 minimum</strong>
+                    <span>
+                        Atteins 19h30 avec au moins 20 énergie.
+                    </span>
+                </div>
+
+            </div>
+
+            <button class="start-button"
+                    onclick="startGame()">
+
+                ▶ COMMENCER LA JOURNÉE
+
+            </button>
+
+            <div style="
+                margin-top:18px;
+                color:#98a2b3;
+                font-size:13px;
+            ">
+                ⚠️ Chaque décision peut avoir des conséquences.
+            </div>
+
+        </div>
+
+    </div>
+    `;
+}
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+function startGame(){
+
+    clearSave();
+
+    game = {
+        time:8 * 60,
+        energy:100,
+        step:1,
+        mails:192,
+
+        sodaNoAnswer:false,
+        alexisIgnored:false,
+        aiSurprise:false,
+
+        hungerProblem:false,
+        voicemailImportant:false,
+
+        finalTriggered:false,
+        finished:false,
+
+        qcmQuestion:1,
+        lastChoice:null
+    };
+
+    renderGame();
+}
+
+
+/* =========================================================
+   GAME INTERFACE
+   ========================================================= */
+
+function renderGame(){
+
+    app.innerHTML = `
+
+    <div class="game">
+
+        <div class="topbar">
+
+            <div class="topbar-inner">
+
+                <div class="brand">
+                    🎯 DGA LIFE SIMULATOR
+                </div>
+
+                <div class="stats">
+
+                    <div class="stat">
+
+                        <div class="stat-label">
+                            Heure
+                        </div>
+
+                        <div
+                            class="stat-value"
+                            id="game-time">
+                            ${formatTime(game.time)}
+                        </div>
+
+                    </div>
+
+                    <div class="stat">
+
+                        <div class="stat-label">
+                            Énergie
+                        </div>
+
+                        <div
+                            class="stat-value"
+                            id="energy-value">
+                            ${game.energy}
+                        </div>
+
+                        <div class="energy-bar">
+                            <div
+                                id="energy-fill"
+                                class="energy-fill"
+                                style="width:${game.energy}%">
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="game-container">
+
+            <div class="progress-wrapper">
+
+                <div class="progress-top">
+
+                    <span>
+                        Journée du DGA
+                    </span>
+
+                    <span>
+                        Étape ${game.step}/10
+                    </span>
+
+                </div>
+
+                <div class="progress">
+
+                    <div
+                        id="progress-fill"
+                        class="progress-fill"
+                        style="width:${((game.step-1)/9)*100}%">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div id="event-container"></div>
+
+        </div>
+
+    </div>
+    `;
+
+    updateInterface();
+
+    renderCurrentStep();
+}
+
+
+/* =========================================================
+   EVENT RENDER
+   ========================================================= */
+
+function renderEvent(title,time,description,content,choices){
+
+    const container =
+        document.getElementById("event-container");
+
+    container.innerHTML = `
+
+        <div class="event-card">
+
+            <div class="event-header">
+
+                <div class="event-time">
+                    ${time}
+                </div>
+
+                <div class="event-title">
+                    ${title}
+                </div>
+
+                <div class="event-description">
+                    ${description}
+                </div>
+
+            </div>
+
+            <div class="event-body">
+
+                ${content}
+
+                <div class="choices">
+
+                    ${choices.map((choice,index)=>`
+
+                        <button
+                            class="choice"
+                            onclick="runChoice(${index})">
+
+                            <span class="choice-letter">
+                                ${String.fromCharCode(65+index)}
+                            </span>
+
+                            <span class="choice-text">
+                                ${choice}
+                            </span>
+
+                        </button>
+
+                    `).join("")}
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   CURRENT STEP
+   ========================================================= */
+
+function renderCurrentStep(){
+
+    switch(game.step){
+
+        case 1:
+            step1();
+            break;
+
+        case 2:
+            step2();
+            break;
+
+        case 3:
+            step3();
+            break;
+
+        case 4:
+            step4();
+            break;
+
+        case 5:
+            step5();
+            break;
+
+        case 6:
+            step6();
+            break;
+
+        case 7:
+            step7();
+            break;
+
+        case 8:
+            step8();
+            break;
+
+        case 10:
+            step10();
+            break;
+
+        default:
+            finalStep();
+    }
+}
+
+
+/* =========================================================
+   STEP 1
+   ========================================================= */
+
+function step1(){
+
+    renderEvent(
+
+        "192 EMAILS",
+        "08:00",
+        "Tu arrives dans ton bureau. Ton ordinateur s'allume. Et là... 192 emails.",
+        
+        `
+        <div class="mail-box">
+
+            <div class="mail-top">
+                📥 Boîte de réception —
+                <strong>${game.mails} messages</strong>
+            </div>
+
+            <div class="mail-content">
+
+                <span class="mail-urgent">
+                    🔴 17 messages marqués URGENT
+                </span>
+
+                <br><br>
+
+                Certains datent d'hier.
+                D'autres sont déjà en retard.
+                Et quelqu'un t'a envoyé un mail avec
+                pour objet : <strong>« PETITE QUESTION »</strong>.
+
+            </div>
+
+        </div>
+        `,
+
+        [
+            "Lire les 192 emails",
+            "Prendre un café avant de commencer",
+            "Lire uniquement les emails « URGENT »",
+            "Faire comme si les emails n'existaient pas"
+        ]
+    );
+}
+
+
+/* =========================================================
+   STEP 2
+   ========================================================= */
+
+function step2(){
+
+    renderEvent(
+
+        "AMÉLIE",
+        "09:00",
+        "Ton téléphone affiche un nouveau message.",
+
+        `
+        <div class="message">
+
+            <strong>💬 Amélie</strong>
+
+            « Peux-tu venir dans mon bureau s'il te plaît
+            Bastien ? J'ai une petite question... »
+
+        </div>
+        `,
+
+        [
+            "« J’arrive tout de suite. »",
+            "« J’arrive dans 5 minutes. »",
+            "« Je termine mon café et j’arrive. »",
+            "« Tu peux me l’envoyer par mail ? »"
+        ]
+    );
+}
+
+
+/* =========================================================
+   STEP 3
+   ========================================================= */
+
+function step3(){
+
+    renderEvent(
+
+        "LA PLONGE DU SELF",
+        "10:00",
+        "Amélie t'explique qu'un problème vient d'apparaître.",
+
+        `
+        <div class="message">
+
+            <strong>🍽️ Amélie :</strong>
+
+            « Il y a un problème avec la plonge du self.
+            Il faudrait peut-être regarder ça rapidement... »
+
+            <br><br>
+
+            Tu regardes l'horloge.
+            Tu avais prévu une matinée tranquille.
+
+        </div>
+        `,
+
+        [
+            "Aller voir le problème toi-même",
+            "Appeler la maintenance",
+            "Appeler Sodexo",
+            "Reporter le problème"
+        ]
+    );
+}
+
+
+/* =========================================================
+   STEP 4
+   ========================================================= */
+
+function step4(){
+
+    renderEvent(
+
+        "LE TÉLÉPHONE SONNE",
+        "11:30",
+        "Ton téléphone professionnel sonne. Numéro inconnu.",
+
+        `
+        <div class="message">
+
+            📞 <strong>Appel entrant</strong>
+
+            <br><br>
+
+            Impossible de savoir qui appelle.
+
+        </div>
+        `,
+
+        [
+            "Répondre immédiatement",
+            "Demander un email",
+            "Transférer l'appel à un collègue",
+            "Ne pas répondre"
+        ]
+    );
+}
+
+
+/* =========================================================
+   STEP 5
+   ========================================================= */
+
+function step5(){
+
+    renderEvent(
+
+        "PAUSE DÉJEUNER",
+        "12:15",
+        "Il est enfin temps de manger.",
+
+        `
+        <div class="message">
+
+            🍽️ Le self est ouvert.
+
+            <br><br>
+
+            Pour une fois, personne ne t'appelle.
+
+            <br>
+
+            Tu peux peut-être manger tranquillement.
+
+        </div>
+        `,
+
+        [
+            "Manger calmement au self",
+            "Manger rapidement",
+            "Vérifier le service",
+            "Prendre uniquement un café"
+        ]
+    );
+}
+
+
+/* =========================================================
+   STEP 6 — QCM SYNDICATS
+   ========================================================= */
+
+function step6(){
+
+    const questions = [
+
+        {
+            question:
+            "Selon vous, quelle est la meilleure façon de gérer un désaccord avec les représentants du personnel ?",
+
+            answers:[
+                "Refuser toute discussion",
+                "Écouter les revendications et chercher un compromis",
+                "Faire semblant de ne pas avoir entendu",
+                "Proposer une réunion puis oublier de venir"
+            ],
+
+            correct:1
+        },
+
+        {
+            question:
+            "Un désaccord apparaît entre la direction et les représentants du personnel. Quelle est la meilleure réaction ?",
+
+            answers:[
+                "Ignorer",
+                "Écouter les positions et chercher une solution acceptable",
+                "Annuler les réunions",
+                "« On verra demain »"
+            ],
+
+            correct:1
+        },
+
+        {
+            question:
+            "Si une proposition des représentants du personnel n’est pas réalisable immédiatement, que faut-il faire ?",
+
+            answers:[
+                "Dire non immédiatement",
+                "Faire semblant d’accepter",
+                "Expliquer pourquoi ce n’est pas réalisable et discuter d’alternatives",
+                "Changer de sujet et parler de la plonge"
+            ],
+
+            correct:2
+        },
+
+        {
+            question:
+            "Plusieurs salariés viennent te voir parce qu’ils trouvent que leurs conditions de travail pourraient être améliorées. Que fais-tu en premier ?",
+
+            answers:[
+                "Dire que ce n’est pas ton problème",
+                "Écouter leurs remarques et comprendre précisément les difficultés",
+                "Leur dire de revenir dans six mois",
+                "Organiser immédiatement une réunion de 4 heures"
+            ],
+
+            correct:1
+        }
+
+    ];
+
+    const q =
+        questions[game.qcmQuestion-1];
+
+    const container =
+        document.getElementById("event-container");
+
+    container.innerHTML = `
+
+        <div class="event-card">
+
+            <div class="event-header">
+
+                <div class="event-time">
+                    14:00
+                </div>
+
+                <div class="event-title">
+                    🤝 FACE AUX SYNDICATS
+                </div>
+
+                <div class="event-description">
+                    La discussion commence.
+                    Et cette fois, impossible de partir discrètement.
+                </div>
+
+            </div>
+
+            <div class="event-body">
+
+                <div class="qcm">
+
+                    <div class="qcm-number">
+                        QUESTION ${game.qcmQuestion}/4
+                    </div>
+
+                    <div class="qcm-question">
+                        ${q.question}
+                    </div>
+
+                    <div class="qcm-options">
+
+                        ${q.answers.map((answer,index)=>`
+
+                            <button
+                                class="qcm-option"
+                                onclick="answerQCM(${index})">
+
+                                ${String.fromCharCode(65+index)}.
+                                ${answer}
+
+                            </button>
+
+                        `).join("")}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   QCM ANSWER
+   ========================================================= */
+
+function answerQCM(answer){
+
+    const questions = [
+
+        {correct:1},
+        {correct:1},
+        {correct:2},
+        {correct:1}
+    ];
+
+    const correct =
+        questions[game.qcmQuestion-1].correct;
+
+    if(answer !== correct){
+
+        changeStats(0,-5);
+
+        showToast(
+            "❌ Mauvaise réponse ! -5 énergie. Le syndicat recommence depuis le début."
+        );
+
+        game.qcmQuestion = 1;
+
+        saveGame();
+
+        setTimeout(()=>{
+            renderCurrentStep();
+        },900);
+
+        return;
+    }
+
+    if(game.qcmQuestion < 4){
+
+        game.qcmQuestion++;
+
+        saveGame();
+
+        renderCurrentStep();
+
+    }else{
+
+        changeStats(0,0);
+
+        showUnionSuccess();
+    }
+}
+
+
+/* =========================================================
+   UNION SUCCESS
+   ========================================================= */
+
+function showUnionSuccess(){
+
+    const container =
+        document.getElementById("event-container");
+
+    container.innerHTML = `
+
+        <div class="event-card">
+
+            <div class="event-header">
+
+                <div class="event-time">
+                    15:00
+                </div>
+
+                <div class="event-title">
+                    🤝 DISCUSSION TERMINÉE
+                </div>
+
+                <div class="event-description">
+                    Tu as réussi à survivre à la confrontation.
+                </div>
+
+            </div>
+
+            <div class="event-body">
+
+                <div class="result good">
+
+                    <div class="result-title">
+                        ✅ Toutes les réponses sont correctes
+                    </div>
+
+                    <div class="result-text">
+
+                        Le représentant syndical te regarde,
+                        réfléchit quelques secondes puis dit :
+
+                        <br><br>
+
+                        <strong>
+                        « Bon. Au moins, on peut discuter sérieusement. »
+                        </strong>
+
+                        <br><br>
+
+                        Soudain, son téléphone sonne.
+
+                        <br><br>
+
+                        « Je dois y aller. On m'appelle
+                        en urgence au bloc opératoire. »
+
+                        <br><br>
+
+                        Et il part immédiatement.
+
+                    </div>
+
+                </div>
+
+                <button class="continue"
+                        onclick="goToStep7()">
+
+                    Continuer la journée →
+
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+function goToStep7(){
+
+    game.step = 7;
+
+    game.time = Math.max(game.time,15 * 60 + 15);
+
+    saveGame();
+
+    renderGame();
+}
+
+
+/* =========================================================
+   STEP 7
+   ========================================================= */
+
+function step7(){
+
+    renderEvent(
+
+        "247 NOUVEAUX EMAILS",
+        "15:15",
+        "Tu retournes dans ton bureau. Ton ordinateur affiche un nouveau compteur.",
+
+        `
+        <div class="mail-box">
+
+            <div class="mail-top">
+                📥 Boîte de réception —
+                <strong>247 nouveaux messages</strong>
+            </div>
+
+            <div class="mail-content">
+
+                <span class="mail-urgent">
+                    🔴 URGENT — À LIRE AVANT 16H00
+                </span>
+
+                <br><br>
+
+                <strong>Expéditeur :</strong> Amélie
+
+                <br><br>
+
+                Tu commences sérieusement à te demander
+                si quelqu'un ne remplit pas volontairement
+                ta boîte mail.
+
+            </div>
+
+        </div>
+        `,
+
+        [
+            "Ouvrir immédiatement",
+            "Prendre un café d'abord",
+            "Traiter les anciens emails",
+            "Demander à une IA quoi faire"
+        ]
+    );
+}
+
+
+/* =========================================================
+   STEP 8
+   ========================================================= */
+
+function step8(){
+
+    renderEvent(
+
+        "APPEL D'ALEXIS",
+        "16:00",
+        "Ton téléphone sonne. Cette fois, c'est Alexis.",
+
+        `
+        <div class="message">
+
+            <strong>📞 Alexis</strong>
+
+            <br><br>
+
+            Le téléphone continue de sonner.
+
+            <br><br>
+
+            Tu sais que si tu réponds,
+            ta journée risque encore de prendre une tournure inattendue.
+
+        </div>
+        `,
+
+        [
+            "Répondre immédiatement",
+            "Laisser sonner et rappeler après le café",
+            "Répondre : « Qu’est-ce qu’il se passe ? »",
+            "Mettre le téléphone en silencieux et faire comme si tu n’avais rien vu"
+        ]
+    );
+}
+
+
+/* =========================================================
+   STEP 10
+   ========================================================= */
+
+function step10(){
+
+    renderEvent(
+
+        "DERNIER MESSAGE",
+        "18:00",
+        "Tu pensais enfin voir la fin de la journée.",
+
+        `
+        <div class="message">
+
+            <strong>💬 Alexis</strong>
+
+            « Salut Bastien, désolé de te déranger aussi tard,
+            mais j’ai besoin de ton aide pour quelque chose.
+            Tu peux me rappeler ? »
+
+        </div>
+        `,
+
+        [
+            "Appeler immédiatement",
+            "Répondre par email",
+            "Dire que tu es déjà en train de partir",
+            "Prendre une dernière pause"
+        ]
+    );
+}
+
+
+/* =========================================================
+   FINAL
+   ========================================================= */
+
+function finalStep(){
+
+    if(game.finalTriggered){
+        return;
+    }
+
+    game.finalTriggered = true;
+
+    saveGame();
+
+    renderEvent(
+
+        "LE DERNIER APPEL",
+        "19:00",
+        "Ton téléphone sonne une dernière fois. C'est Karine.",
+
+        `
+        <div class="message">
+
+            <strong>📞 Karine</strong>
+
+            <br><br>
+
+            « Salut Bastien, désolée de t'appeler si tard…
+            Je voulais te prévenir : il faut finalement
+            faire une réunion avec tous les syndicats. »
+
+            <br><br>
+
+            Tu regardes l'heure.
+
+            <strong>19:00.</strong>
+
+            <br><br>
+
+            Il te reste 30 minutes pour sauver ta journée.
+
+        </div>
+        `,
+
+        [
+            "Accepter la réunion avec tous les syndicats",
+            "Reporter la réunion à demain",
+            "Demander à Karine de gérer la réunion",
+            "Dire que tu es déjà parti"
+        ]
+    );
+}
+
+
+/* =========================================================
+   RUN CHOICE
+   ========================================================= */
+
+function runChoice(index){
+
+    game.lastChoice = index;
+
+    switch(game.step){
+
+        case 1:
+            choiceStep1(index);
+            break;
+
+        case 2:
+            choiceStep2(index);
+            break;
+
+        case 3:
+            choiceStep3(index);
+            break;
+
+        case 4:
+            choiceStep4(index);
+            break;
+
+        case 5:
+            choiceStep5(index);
+            break;
+
+        case 7:
+            choiceStep7(index);
+            break;
+
+        case 8:
+            choiceStep8(index);
+            break;
+
+        case 10:
+            choiceStep10(index);
+            break;
+
+        default:
+            finalChoice(index);
+    }
+}
+
+
+/* =========================================================
+   STEP 1 CHOICES
+   ========================================================= */
+
+function choiceStep1(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(45,-15);
+
+            game.mails = 0;
+
+            showResult(
+                "📨 Les 192 emails sont lus.",
+                "Tu viens de perdre 45 minutes et 15 points d'énergie. Mais au moins, ta boîte est vide.",
+                "warning",
+                2
+            );
+
+            break;
+
+
+        case 1:
+
+            changeStats(15,10);
+
+            showResult(
+                "☕ Excellent choix.",
+                "Le café te redonne un peu d'énergie. Les emails peuvent attendre quelques minutes.",
+                "good",
+                2
+            );
+
+            break;
+
+
+        case 2:
+
+            changeStats(20,-5);
+
+            game.mails = 176;
+
+            showResult(
+                "🔴 Les urgents sont traités.",
+                "176 emails restent dans ta boîte. Mais tu as gagné du temps.",
+                "warning",
+                2
+            );
+
+            break;
+
+
+        case 3:
+
+            changeStats(0,5);
+
+            showResult(
+                "😎 Technique de survie.",
+                "Tu fais semblant de ne pas voir les emails. Étrangement, tu te sens mieux.",
+                "good",
+                2
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   STEP 2 CHOICES
+   ========================================================= */
+
+function choiceStep2(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(20,-5);
+
+            showResult(
+                "🏃 Tu y vas immédiatement.",
+                "Amélie est contente. Toi, un peu moins.",
+                "warning",
+                3
+            );
+
+            break;
+
+        case 1:
+
+            changeStats(10,-2);
+
+            showResult(
+                "👍 Cinq minutes.",
+                "Amélie accepte. Pour l'instant.",
+                "good",
+                3
+            );
+
+            break;
+
+        case 2:
+
+            changeStats(15,5);
+
+            showResult(
+                "☕ Priorités.",
+                "Tu termines ton café. Amélie attend.",
+                "good",
+                3
+            );
+
+            break;
+
+        case 3:
+
+            showResult(
+                "📩 Mauvaise idée.",
+                "Amélie répond : « Non, c'est mieux si tu viens. »",
+                "warning",
+                3
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   STEP 3 CHOICES
+   ========================================================= */
+
+function choiceStep3(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(30,-8);
+
+            showResult(
+                "🍽️ Tu vas voir la plonge.",
+                "Le problème est plus compliqué que prévu. Tu viens de perdre 30 minutes.",
+                "warning",
+                4
+            );
+
+            break;
+
+        case 1:
+
+            changeStats(15,-3);
+
+            showResult(
+                "🔧 Maintenance appelée.",
+                "Quelqu'un va venir regarder le problème.",
+                "good",
+                4
+            );
+
+            break;
+
+        case 2:
+
+            if(Math.random() < 1/3){
+
+                changeStats(10,-2);
+
+                showResult(
+                    "📞 Sodexo répond !",
+                    "Miracle. Quelqu'un décroche et prend le problème en charge.",
+                    "good",
+                    4
+                );
+
+            }else{
+
+                changeStats(5,-3);
+
+                game.sodaNoAnswer = true;
+
+                showResult(
+                    "📞 Personne ne répond.",
+                    "Tu laisses un message. Les syndicats risquent de s'en souvenir.",
+                    "bad",
+                    4
+                );
+            }
+
+            break;
+
+        case 3:
+
+            changeStats(5,-2);
+
+            showResult(
+                "⏳ Tu repousses le problème.",
+                "La plonge peut attendre... enfin, tu l'espères.",
+                "warning",
+                4
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   STEP 4 CHOICES
+   ========================================================= */
+
+function choiceStep4(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(20,-5);
+
+            showResult(
+                "📞 Tu réponds.",
+                "L'appel était important et te prend plus de temps que prévu.",
+                "warning",
+                5
+            );
+
+            break;
+
+        case 1:
+
+            changeStats(5,-2);
+
+            showResult(
+                "📧 « Envoyez-moi un mail. »",
+                "Simple, efficace. Enfin... normalement.",
+                "good",
+                5
+            );
+
+            break;
+
+        case 2:
+
+            changeStats(0,2);
+
+            showResult(
+                "👨‍💼 Tu transfères.",
+                "Ton collègue accepte. Il reviendra peut-être avec une question.",
+                "good",
+                5
+            );
+
+            break;
+
+        case 3:
+
+            changeStats(0,2);
+
+            game.voicemailImportant = true;
+
+            showResult(
+                "📵 Tu ne réponds pas.",
+                "Un message vocal apparaît : « C'était important. Rappelez-moi. »",
+                "warning",
+                5
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   STEP 5 CHOICES
+   ========================================================= */
+
+function choiceStep5(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(45,15);
+
+            showResult(
+                "🍽️ Déjeuner tranquille.",
+                "Un rare moment de calme. +15 énergie.",
+                "good",
+                6
+            );
+
+            break;
+
+        case 1:
+
+            changeStats(20,5);
+
+            showResult(
+                "⚡ Repas express.",
+                "Tu manges rapidement et retournes au bureau.",
+                "good",
+                6
+            );
+
+            break;
+
+        case 2:
+
+            changeStats(30,-2);
+
+            showResult(
+                "🔍 Tu vérifies le service.",
+                "Évidemment, tu trouves quelque chose à vérifier.",
+                "warning",
+                6
+            );
+
+            break;
+
+        case 3:
+
+            changeStats(10,5);
+
+            game.hungerProblem = true;
+
+            showResult(
+                "☕ Encore du café.",
+                "Ton énergie remonte, mais ton estomac n'est pas convaincu.",
+                "warning",
+                6
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   STEP 7 CHOICES
+   ========================================================= */
+
+function choiceStep7(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(10,-5);
+
+            showResult(
+                "📨 Tu ouvres le mail.",
+                "Évidemment, il y avait une raison pour laquelle il était marqué URGENT.",
+                "warning",
+                8
+            );
+
+            break;
+
+        case 1:
+
+            changeStats(15,10);
+
+            showResult(
+                "☕ Encore un café.",
+                "Tu gagnes de l'énergie. Le mail attendra.",
+                "good",
+                8
+            );
+
+            break;
+
+        case 2:
+
+            changeStats(30,-5);
+
+            showResult(
+                "📚 Tu traites les anciens mails.",
+                "Tu avances... mais pas vraiment sur ce qui est urgent.",
+                "warning",
+                8
+            );
+
+            break;
+
+        case 3:
+
+            changeStats(10,5);
+
+            game.aiSurprise = true;
+
+            showResult(
+                "🤖 L'IA te répond.",
+                "Elle te conseille de « rester calme et de prioriser ». Une surprise t'attend peut-être ce soir...",
+                "good",
+                8
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   STEP 8 CHOICES
+   ========================================================= */
+
+function choiceStep8(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(20,-5);
+
+            showResult(
+                "📞 Tu réponds à Alexis.",
+                "La conversation prend du temps, mais au moins tu sais ce qu'il veut.",
+                "warning",
+                10
+            );
+
+            break;
+
+        case 1:
+
+            changeStats(15,5);
+
+            showResult(
+                "☕ Tu rappelleras après.",
+                "Tu gagnes un peu d'énergie et gardes le contrôle.",
+                "good",
+                10
+            );
+
+            break;
+
+        case 2:
+
+            changeStats(10,-2);
+
+            showResult(
+                "📞 « Qu'est-ce qu'il se passe ? »",
+                "Alexis t'explique rapidement ce dont il a besoin.",
+                "warning",
+                10
+            );
+
+            break;
+
+        case 3:
+
+            changeStats(0,5);
+
+            game.alexisIgnored = true;
+
+            showResult(
+                "🏆 TU AS RÉUSSI !",
+                "Tu mets ton téléphone en silencieux. Tu as l'impression d'avoir gagné... mais quelque chose te dit que ce n'est pas terminé.",
+                "good",
+                10
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   STEP 10 CHOICES
+   ========================================================= */
+
+function choiceStep10(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(20,-5);
+
+            showResult(
+                "📞 Tu rappelles Alexis.",
+                "Encore un problème à régler. La journée n'est décidément pas finie.",
+                "warning",
+                "FINAL"
+            );
+
+            break;
+
+        case 1:
+
+            changeStats(15,-3);
+
+            showResult(
+                "📧 Tu réponds par email.",
+                "Tu gagnes un peu de temps mais le problème reste là.",
+                "warning",
+                "FINAL"
+            );
+
+            break;
+
+        case 2:
+
+            changeStats(0,5);
+
+            showResult(
+                "🚪 « Je suis déjà en train de partir. »",
+                "Techniquement, c'est vrai. Mais tu n'es pas encore sorti.",
+                "good",
+                "FINAL"
+            );
+
+            break;
+
+        case 3:
+
+            changeStats(10,10);
+
+            showResult(
+                "😌 Dernière pause.",
+                "Tu prends quelques minutes pour souffler. Ton téléphone sonne à nouveau.",
+                "good",
+                "FINAL"
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   FINAL CHOICES
+   ========================================================= */
+
+function finalChoice(index){
+
+    switch(index){
+
+        case 0:
+
+            changeStats(30,-8);
+
+            if(game.sodaNoAnswer){
+
+                showSodaConsequence();
+
+            }else{
+
+                checkFinalVictory();
+            }
+
+            break;
+
+
+        case 1:
+
+            changeStats(5,3);
+
+            showDefeat(
+                "Tu reportes la réunion.",
+                "Le lendemain, les syndicats bloquent la clinique. Mauvaise idée."
+            );
+
+            break;
+
+
+        case 2:
+
+            changeStats(10,2);
+
+            showSecretEnding();
+
+            break;
+
+
+        case 3:
+
+            changeStats(0,5);
+
+            showDefeat(
+                "Tu dis que tu es déjà parti.",
+                "Le lendemain, les syndicats bloquent la clinique. Tu aurais peut-être dû rester cinq minutes de plus."
+            );
+
+            break;
+    }
+}
+
+
+/* =========================================================
+   SODEXO CONSEQUENCE
+   ========================================================= */
+
+function showSodaConsequence(){
+
+    const container =
+        document.getElementById("event-container");
+
+    container.innerHTML = `
+
+        <div class="result bad">
+
+            <div class="result-title">
+                🍽️ LE RETOUR DE LA PLONGE
+            </div>
+
+            <div class="result-text">
+
+                La réunion commence.
+
+                <br><br>
+
+                Les représentants syndicaux reviennent
+                sur le problème de la plonge du self.
+
+                <br><br>
+
+                <strong>
+                « On vous avait demandé de régler ça...
+                et personne n'a répondu. »
+                </strong>
+
+                <br><br>
+
+                😬
+
+                <br><br>
+
+                Tu perds encore <strong>15 énergie</strong>.
+
+            </div>
+
+        </div>
+
+        <button
+            class="continue"
+            onclick="finishAfterSoda()">
+
+            Affronter les conséquences →
+
+        </button>
+    `;
+
+    changeStats(0,-15);
+}
+
+
+function finishAfterSoda(){
+
+    checkFinalVictory();
+}
+
+
+/* =========================================================
+   FINAL VICTORY CHECK
+   ========================================================= */
+
+function checkFinalVictory(){
+
+    game.time = 19 * 60 + 30;
+
+    saveGame();
+
+    /*
+       Si Alexis a été ignoré à 16h,
+       le joueur croit avoir gagné...
+       mais une fausse victoire arrive.
+    */
+
+    if(game.alexisIgnored){
+
+        showAlexisEnding();
+
+        return;
+    }
+
+    if(game.energy >= 20){
+
+        showVictory();
+
+    }else{
+
+        showGameOver(
+            "Tu as atteint 19h30...",
+            "Mais ton énergie est tombée sous la barre des 20. La journée t'a finalement eu."
+        );
+    }
+}
+
+
+/* =========================================================
+   VICTORY
+   ========================================================= */
+
+function showVictory(){
+
+    game.finished = true;
+
+    clearSave();
+
+    app.innerHTML = `
+
+        <div class="end-screen">
+
+            <div class="end-icon">
+                🏆
+            </div>
+
+            <div class="end-title">
+                VICTOIRE !
+            </div>
+
+            <div class="end-text">
+
+                Il est <strong>19h30</strong>.
+
+                <br><br>
+
+                Tu as survécu à la journée.
+
+                <br>
+
+                Les emails, Amélie, la plonge,
+                les syndicats, les appels et Karine...
+
+                <br><br>
+
+                <strong>
+                Rien n'a réussi à t'arrêter.
+                </strong>
+
+            </div>
+
+            <div class="end-stats">
+
+                <div class="end-stat">
+                    <strong>${game.energy}</strong>
+                    énergie restante
+                </div>
+
+                <div class="end-stat">
+                    <strong>19:30</strong>
+                    heure de fin
+                </div>
+
+            </div>
+
+            <button
+                class="start-button"
+                onclick="startGame()">
+
+                🔄 REJOUER
+
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   ALEXIS FALSE VICTORY
+   ========================================================= */
+
+function showAlexisEnding(){
+
+    game.finished = true;
+
+    clearSave();
+
+    app.innerHTML = `
+
+        <div class="end-screen">
+
+            <div class="end-icon">
+                😈
+            </div>
+
+            <div class="end-title">
+                FAUSSE VICTOIRE
+            </div>
+
+            <div class="end-text">
+
+                <strong>
+                19h30.
+                </strong>
+
+                <br><br>
+
+                Tu regardes ton ordinateur.
+
+                <br>
+
+                Tu as réussi.
+
+                <br>
+
+                Tu fermes ton bureau avec le sentiment
+                d'avoir enfin terminé ta journée.
+
+                <br><br>
+
+                🏠 Tu rentres chez toi.
+
+                <br><br>
+
+                Tu ouvres la porte.
+
+                <br><br>
+
+                <strong>
+                Alexis est là.
+                </strong>
+
+                <br><br>
+
+                Il te regarde.
+
+                <br><br>
+
+                « Alors... pourquoi tu n'as pas répondu
+                à mon appel ? »
+
+                <br><br>
+
+                😬
+
+                <br><br>
+
+                Et la discussion commence.
+
+                <br><br>
+
+                Tu pensais avoir gagné.
+
+                <br>
+
+                <strong>
+                Mais tu avais oublié une chose :
+                Alexis.
+                </strong>
+
+                <br><br>
+
+                Ton énergie descend progressivement
+                jusqu'à <strong>0</strong>.
+
+            </div>
+
+            <div class="end-stats">
+
+                <div class="end-stat">
+                    <strong>0</strong>
+                    énergie finale
+                </div>
+
+                <div class="end-stat">
+                    <strong>😈</strong>
+                    Alexis
+                </div>
+
+            </div>
+
+            <button
+                class="start-button"
+                onclick="startGame()">
+
+                🔄 RECOMMENCER
+
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   SECRET ENDING
+   ========================================================= */
+
+function showSecretEnding(){
+
+    game.finished = true;
+
+    clearSave();
+
+    app.innerHTML = `
+
+        <div class="end-screen">
+
+            <div class="end-icon">
+                🤝
+            </div>
+
+            <div class="end-title">
+                FIN SECRÈTE
+            </div>
+
+            <div class="end-text">
+
+                Karine accepte finalement de gérer
+                la réunion à ta place.
+
+                <br><br>
+
+                Le problème est réglé.
+
+                <br><br>
+
+                Tu pensais avoir trouvé la solution parfaite.
+
+                <br><br>
+
+                Puis Karine te regarde :
+
+                <br><br>
+
+                <strong>
+                « Bon... maintenant tu me dois une énorme faveur. »
+                </strong>
+
+                <br><br>
+
+                Tu viens officiellement de devenir
+                <strong>redevable à Karine pour le reste de ta vie.</strong>
+
+                <br><br>
+
+                Félicitations ?
+
+            </div>
+
+            <div class="end-stats">
+
+                <div class="end-stat">
+                    <strong>${game.energy}</strong>
+                    énergie
+                </div>
+
+                <div class="end-stat">
+                    <strong>🤝</strong>
+                    dette envers Karine
+                </div>
+
+            </div>
+
+            <button
+                class="start-button"
+                onclick="startGame()">
+
+                🔄 REJOUER
+
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   DEFEAT
+   ========================================================= */
+
+function showDefeat(title,text){
+
+    game.finished = true;
+
+    clearSave();
+
+    app.innerHTML = `
+
+        <div class="end-screen">
+
+            <div class="end-icon">
+                💥
+            </div>
+
+            <div class="end-title">
+                DÉFAITE
+            </div>
+
+            <div class="end-text">
+
+                <strong>${title}</strong>
+
+                <br><br>
+
+                ${text}
+
+            </div>
+
+            <div class="end-stats">
+
+                <div class="end-stat">
+                    <strong>${game.energy}</strong>
+                    énergie
+                </div>
+
+                <div class="end-stat">
+                    <strong>${formatTime(game.time)}</strong>
+                    heure
+                </div>
+
+            </div>
+
+            <button
+                class="start-button"
+                onclick="startGame()">
+
+                🔄 RETENTER
+
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   GAME OVER
+   ========================================================= */
+
+function showGameOver(title,text){
+
+    game.finished = true;
+
+    clearSave();
+
+    app.innerHTML = `
+
+        <div class="end-screen">
+
+            <div class="end-icon">
+                🔋
+            </div>
+
+            <div class="end-title">
+                PLUS D'ÉNERGIE
+            </div>
+
+            <div class="end-text">
+
+                <strong>${title}</strong>
+
+                <br><br>
+
+                ${text}
+
+                <br><br>
+
+                Tu devais terminer la journée
+                avec au moins <strong>20 énergie</strong>.
+
+            </div>
+
+            <div class="end-stats">
+
+                <div class="end-stat">
+                    <strong>${game.energy}</strong>
+                    énergie
+                </div>
+
+                <div class="end-stat">
+                    <strong>${formatTime(game.time)}</strong>
+                    heure
+                </div>
+
+            </div>
+
+            <button
+                class="start-button"
+                onclick="startGame()">
+
+                🔄 RECOMMENCER
+
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   RESULT
+   ========================================================= */
+
+function showResult(title,text,type,nextStep){
+
+    const container =
+        document.getElementById("event-container");
+
+    container.innerHTML = `
+
+        <div class="event-card">
+
+            <div class="event-header">
+
+                <div class="event-time">
+                    ${formatTime(game.time)}
+                </div>
+
+                <div class="event-title">
+                    DÉCISION PRISE
+                </div>
+
+            </div>
+
+            <div class="event-body">
+
+                <div class="result ${type}">
+
+                    <div class="result-title">
+                        ${title}
+                    </div>
+
+                    <div class="result-text">
+                        ${text}
+                    </div>
+
+                </div>
+
+                <button
+                    class="continue"
+                    onclick="continueAfterChoice('${nextStep}')">
+
+                    Continuer →
+
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   CONTINUE
+   ========================================================= */
+
+function continueAfterChoice(nextStep){
+
+    if(nextStep === "FINAL"){
+
+        finalStep();
+
+        return;
+    }
+
+    game.step = Number(nextStep);
+
+    saveGame();
+
+    renderGame();
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+function showToast(message){
+
+    toast.textContent = message;
+
+    toast.classList.add("show");
+
+    setTimeout(()=>{
+        toast.classList.remove("show");
+    },2500);
+}
+
+
+/* =========================================================
+   INITIALISATION
+   ========================================================= */
+
+showHome();
+
+</script>
+
+</body>
+</html>
